@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.repository.mapper.TotalMapper">
+	<cache />
+
+	<sql id="BaseColumns">
+		comment_id,
+		created_date AS createdDate,
+		modified_date AS modifiedDate,
+		content,
+		post_id AS postId,
+		group_id AS groupId,
+		name AS member_name,
+		c.writer_id AS writer_id
+	</sql>
+	
+	<resultMap id="collectionAllGroup" type="Group">
+		<id column="group_id" jdbcType="NUMERIC" property="groupId" />
+		<result column="created_date" jdbcType="DATE" property="createdDate"/>
+		<result column="number_of_member" jdbcType="NUMERIC" property="numberOfUsers" />
+		<result column="name" jdbcType="VARCHAR" property="groupName" />
+		<result column="description" jdbcType="VARCHAR" property="description" />
+		<result column="term" jdbcType="NUMERIC" property="term" />
+		<result column="place" jdbcType="VARCHAR" property="place" />
+		<result column="gender_type" jdbcType="CHAR" property="genderType" />
+		<result column="traffic" jdbcType="VARCHAR" property="trafficType" />
+		<result column="age" jdbcType="NUMERIC" property="age" />
+		<result column="leader_id" jdbcType="NUMERIC" property="leaderId" />
+		<collection property="groupMembers" ofType="User">
+			<id property="user_id" column="user_id" />
+		</collection>	
+	</resultMap>
+	
+	<resultMap id="collectionFindGroup" type="Group">
+		<id column="group_id" jdbcType="NUMERIC" property="groupId" />
+		<result column="created_date" jdbcType="DATE" property="createdDate"/>
+		<result column="number_of_member" jdbcType="NUMERIC" property="numberOfUsers" />
+		<result column="name" jdbcType="VARCHAR" property="groupName" />
+		<result column="description" jdbcType="VARCHAR" property="description" />
+		<result column="term" jdbcType="NUMERIC" property="term" />
+		<result column="place" jdbcType="VARCHAR" property="place" />
+		<result column="gender_type" jdbcType="CHAR" property="genderType" />
+		<result column="traffic" jdbcType="VARCHAR" property="trafficType" />
+		<result column="age" jdbcType="NUMERIC" property="age" />
+		<result column="leader_id" jdbcType="NUMERIC" property="leaderId" />
+		<collection property="groupMembers" ofType="User">
+			<id property="user_id" column="user_id" />
+			<result property="email" column="email" />
+			<result property="password" column="password" />
+			<result property="name" column="user_name" />
+			<result property="phone" column="phone" />
+			<result property="age" column="age" />
+			<result property="gender" column="gender" />
+		</collection>	
+	</resultMap>
+	
+	<select id="selectAllGroup" resultMap="collectionAllGroup">
+		SELECT *
+		FROM TRAVELGROUP tg, GROUPMEMBER gm
+		WHERE tg.group_id = gm.group_id
+	</select>
+	
+	<select id="selectGroup" parameterType="int" resultMap="collectionFindGroup">
+		SELECT tg.group_id, tg.created_date, tg.number_of_member, tg.name,
+		tg.description, tg.term, tg.place, tg.gender_type, tg.traffic, tg.leader_id, 
+		m.user_id, m.email, m.password, m.name AS user_name,
+		m.phone, m.age, m.gender
+		FROM TRAVELGROUP tg, GROUPMEMBER gm, MEMBER m
+		WHERE tg.group_id=#{groupId} and tg.group_id=gm.group_id and gm.user_id=m.user_id
+	</select>
+	
+	<!-- getOneComment, existingComment -->
+	<select id="selectCommentByPrimaryKey" parameterType="int" 
+		resultType="Comment">
+		SELECT <include refid="BaseColumns"/>
+		FROM COMMT c, MEMBER m
+		WHERE comment_id = #{comment_id} and c.writer_id = m.user_id
+	</select>
+	
+	<!-- getCommentList -->
+	<select id="selectAllComment" parameterType="int" resultType="Comment">
+	
+		SELECT <include refid="BaseColumns" />
+		FROM COMMT c, MEMBER m
+		WHERE c.post_id = #{postId} and c.writer_id = m.user_id ORDER BY comment_id
+	</select>
+ 
+ 	<!-- getCommentCount -->
+ 	<select id="selectCommentCount" parameterType="int"
+ 		resultType="int">
+ 		SELECT count(*) as count
+ 		FROM COMMT
+ 		WHERE post_id = #{postId}
+ 	</select>
+ 
+ 	<!-- createComment -->
+	<insert id="insertComment" parameterType="Comment">
+		<selectKey keyProperty="comment_id" resultType="int" order="BEFORE">
+			SELECT sequence_commt.nextval AS comment_id FROM DUAL
+		</selectKey>
+		INSERT INTO COMMT (comment_id, created_Date, content, post_id, group_id, writer_id)
+		VALUES (#{comment_id}, SYSDATE, #{content}, #{postId}, #{groupId}, #{writer_id})
+	</insert>
+ 
+ 	<!-- deleteComment -->
+	<delete id="deleteComment" parameterType="int">
+		DELETE FROM COMMT
+		WHERE comment_id = #{id}
+	</delete>
+	
+	<!-- removeAllComment -->
+	<delete id="deleteAllComments" parameterType="int">
+		DELETE FROM COMMT
+		WHERE post_id = #{postId}
+	</delete>
+	
+	<delete id="deleteAllCommentsByGroupId" parameterType="int">
+		DELETE FROM COMMT
+		WHERE group_id = #{groupId}
+	</delete>
+	
+</mapper>
